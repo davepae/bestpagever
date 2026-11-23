@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Abyssal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="A descent through the ocean's five depths, lit only by living light.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Inter:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Layout: a fixed living-ocean canvas; five full-height "depth" sections scroll over it; a depth gauge rides the right edge. */
+  :root{
+    --abyss:#01050a;
+    --ink:#e8f7fb;
+    --ink-soft:rgba(220,242,248,.74);
+    --ink-faint:rgba(220,242,248,.42);
+    --line:rgba(160,230,255,.16);
+    --biolume:#5ff3ff;
+    --jelly:#ff8ad8;
+    --serif:"Fraunces","Iowan Old Style","Palatino Linotype",Georgia,serif;
+    --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+    --ease:cubic-bezier(.2,.7,0,1);
+    color-scheme:dark;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{background:var(--abyss);color:var(--ink)}
+  body{margin:0;background:var(--abyss);color:var(--ink);font-family:var(--sans);font-weight:300;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  ::selection{background:rgba(95,243,255,.25);color:#fff}
+
+  #sea{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;background:#03141f}
+  .veil{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(130% 100% at 50% 40%,transparent 50%,rgba(0,0,0,.6) 100%)}
+
+  /* ── Chrome ── */
+  .top{
+    position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:16px;
+    padding-block:calc(env(safe-area-inset-top,0px) + clamp(16px,2.6vw,26px)) 0;
+    padding-left:max(clamp(16px,4vw,44px), env(safe-area-inset-left,0px));
+    padding-right:max(clamp(16px,4vw,44px), env(safe-area-inset-right,0px));
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);
+    animation:fadeIn 1.6s var(--ease) 1.2s both;
+  }
+  .brand{display:flex;align-items:center;gap:10px;color:var(--ink)}
+  .brand i{width:9px;height:9px;border-radius:50%;background:var(--biolume);box-shadow:0 0 12px 2px var(--biolume);animation:blink 3.2s ease-in-out infinite}
+  @keyframes blink{50%{opacity:.35;box-shadow:0 0 4px 0 var(--biolume)}}
+
+  .gauge{
+    position:fixed;z-index:10;right:max(clamp(16px,2.6vw,36px), env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);
+    height:min(56vh,440px);width:120px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ink-faint);
+    animation:fadeIn 1.6s var(--ease) 1.6s both;
+  }
+  .gauge .rail{position:absolute;right:0;top:0;bottom:0;width:1px;background:linear-gradient(rgba(160,230,255,.5),rgba(160,230,255,.08))}
+  .gauge .tick{position:absolute;right:0;display:flex;align-items:center;gap:10px;transform:translateY(-50%);white-space:nowrap;transition:color .6s}
+  .gauge .tick::after{content:"";width:8px;height:1px;background:currentColor}
+  .gauge .tick.on{color:var(--ink)}
+  .gauge .mark{position:absolute;right:-4px;width:9px;height:9px;margin-top:-4.5px;border-radius:50%;background:var(--biolume);box-shadow:0 0 14px 3px rgba(95,243,255,.7)}
+
+  .readout{
+    position:fixed;z-index:10;left:0;bottom:0;
+    padding-block:0 calc(env(safe-area-inset-bottom,0px) + clamp(16px,2.6vw,26px));
+    padding-left:max(clamp(16px,4vw,44px), env(safe-area-inset-left,0px));
+    display:flex;gap:clamp(16px,2.4vw,32px);flex-wrap:wrap;
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);
+    font-variant-numeric:tabular-nums;animation:fadeIn 1.6s var(--ease) 1.8s both;
+  }
+  .readout b{display:block;font-weight:500;font-size:13px;letter-spacing:.06em;color:var(--ink);margin-top:2px}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+  /* ── Sections ── */
+  main{position:relative;z-index:5}
+  section{
+    position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    padding-block:clamp(110px,16vh,180px);
+    padding-left:max(clamp(16px,7vw,120px), env(safe-area-inset-left,0px));
+    padding-right:max(clamp(16px,12vw,190px), env(safe-area-inset-right,0px));
+  }
+  .zone{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--biolume);margin:0 0 26px;display:flex;align-items:center;gap:14px;text-shadow:0 0 18px rgba(95,243,255,.5)}
+  .zone::before{content:"";width:28px;height:1px;background:currentColor;opacity:.7}
+  h1,h2{font-family:var(--serif);font-weight:300;letter-spacing:-.025em;margin:0;text-wrap:balance}
+  h2{font-size:clamp(40px,5.8vw,92px);line-height:1.02;font-variation-settings:"opsz" 144}
+  h2 em{font-style:italic;color:#bff8ff;text-shadow:0 0 40px rgba(95,243,255,.45)}
+  .body{max-width:46ch;margin:28px 0 0;font-size:clamp(16px,1.25vw,19px);color:var(--ink-soft);text-wrap:pretty}
+
+  /* Hero */
+  .hero{align-items:center;text-align:center;padding-right:max(clamp(16px,7vw,120px), env(safe-area-inset-right,0px))}
+  .hero .zone{justify-content:center}
+  .hero .zone::after{content:"";width:28px;height:1px;background:currentColor;opacity:.7}
+  .title{
+    font-size:clamp(84px,18vw,300px);line-height:.84;font-style:italic;font-weight:300;letter-spacing:-.04em;
+    font-variation-settings:"opsz" 144;white-space:nowrap;
+  }
+  .title span{
+    display:inline-block;padding:0 .04em;margin:0 -.04em;
+    background:linear-gradient(178deg,#ffffff 15%,#c4fbff 50%,rgba(95,243,255,.55) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 28px rgba(95,243,255,.28));
+    animation:surface 2.4s var(--ease) both;animation-delay:calc(var(--i) * 110ms + 200ms);
+  }
+  @keyframes surface{from{opacity:0;transform:translateY(.35em);filter:blur(16px) drop-shadow(0 0 0 transparent)}}
+  .lede{font-family:var(--serif);font-weight:300;font-size:clamp(20px,2.1vw,28px);line-height:1.38;color:var(--ink-soft);max-width:32ch;margin:34px auto 0;animation:rise 1.8s var(--ease) 1.2s both}
+  .lede em{color:var(--ink)}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}}
+  .descend{
+    margin-top:48px;display:inline-flex;align-items:center;gap:14px;padding:14px 24px 14px 18px;border-radius:999px;
+    border:1px solid var(--line);background:rgba(4,24,36,.35);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    color:var(--ink);text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    transition:border-color .5s, box-shadow .6s var(--ease), transform .6s var(--ease);animation:rise 1.8s var(--ease) 1.6s both;
+  }
+  .descend:hover,.descend:focus-visible{border-color:rgba(95,243,255,.6);box-shadow:0 0 40px -6px rgba(95,243,255,.6);transform:translateY(2px);outline:none}
+  .descend svg{width:14px;height:14px;animation:bob 2.4s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(3px)}}
+
+  /* Sunlit */
+  .split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(32px,6vw,110px);align-items:end;max-width:1240px;width:100%}
+  .big-stat{border-left:1px solid var(--line);padding-left:clamp(18px,2.4vw,36px)}
+  .big-stat .n{font-family:var(--serif);font-weight:300;font-size:clamp(72px,9vw,150px);line-height:.9;letter-spacing:-.04em;font-variation-settings:"opsz" 144;font-variant-numeric:lining-nums}
+  .big-stat .n small{font-size:.28em;letter-spacing:0;color:var(--ink-faint);margin-left:.15em}
+  .big-stat .l{margin-top:16px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);max-width:30ch;line-height:1.8}
+  .bar{margin-top:26px;height:180px;width:46px;position:relative;border-radius:3px;background:linear-gradient(rgba(95,200,255,.08),rgba(0,0,0,.25));border:1px solid var(--line);overflow:hidden}
+  .bar::before{content:"";position:absolute;left:0;right:0;top:0;height:5.4%;background:linear-gradient(#8fe6ff,#2a9fd0);box-shadow:0 0 16px #5fd0ff}
+  .bar-wrap{display:flex;align-items:flex-start;gap:14px}
+  .bar-wrap span{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-top:28px;line-height:1.7}
+
+  /* Twilight */
+  .twilight{align-items:flex-end;text-align:right}
+  .twilight .zone{justify-content:flex-end}
+  .twilight .zone::before{display:none}
+  .twilight .zone::after{content:"";width:28px;height:1px;background:currentColor;opacity:.7}
+  .twilight h2{max-width:15ch}
+  .twilight .body{margin-left:auto}
+  .migr{margin-top:40px;display:flex;justify-content:flex-end;gap:10px;align-items:flex-end;height:90px}
+  .migr i{width:3px;border-radius:3px;background:linear-gradient(var(--biolume),transparent);opacity:.7;animation:migrate 6s ease-in-out infinite;animation-delay:calc(var(--d) * -1s)}
+  @keyframes migrate{0%,100%{height:12px;transform:translateY(0)}50%{height:70px;transform:translateY(-14px)}}
+
+  /* Midnight */
+  .midnight{align-items:center;text-align:center}
+  .midnight .zone{justify-content:center}
+  .midnight .zone::after{content:"";width:28px;height:1px;background:currentColor;opacity:.7}
+  .midnight h2{max-width:17ch}
+  .stats{margin-top:clamp(48px,8vh,84px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;max-width:980px;width:100%;background:var(--line);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+  .stat{background:rgba(2,12,20,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:clamp(22px,3vw,40px) 18px;min-width:0}
+  .stat .n{font-family:var(--serif);font-weight:300;font-size:clamp(44px,5vw,76px);line-height:1;letter-spacing:-.03em;font-variant-numeric:lining-nums tabular-nums;color:#dffcff}
+  .stat .n small{font-size:.36em;color:var(--ink-faint);margin-left:.12em}
+  .stat .l{margin-top:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);line-height:1.7}
+
+  /* Abyss */
+  .abyss{align-items:flex-start;min-height:112vh}
+  .abyss h2{font-size:clamp(52px,8.4vw,140px);line-height:.96}
+  .chips{margin-top:40px;display:flex;flex-wrap:wrap;gap:12px}
+  .chip{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(2,14,22,.4);font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft)}
+  .chip i{width:7px;height:7px;border-radius:50%;background:var(--biolume);box-shadow:0 0 10px var(--biolume)}
+  .chip:nth-child(2) i{background:var(--jelly);box-shadow:0 0 10px var(--jelly)}
+  .foot{position:absolute;left:0;right:0;bottom:clamp(70px,12vh,110px);display:flex;justify-content:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);padding:0 16px;text-align:center}
+
+  /* Reveal (only elements that start below the fold get .later, so the first frame is complete) */
+  .rv.later{opacity:0;transform:translateY(34px)}
+  .rv{transition:opacity 1.5s var(--ease), transform 1.5s var(--ease)}
+  .rv.d1{transition-delay:.12s}.rv.d2{transition-delay:.24s}.rv.d3{transition-delay:.36s}
+
+  a:focus-visible{outline:2px solid var(--biolume);outline-offset:4px}
+
+  @media (max-width:860px){
+    .split{grid-template-columns:1fr;align-items:start}
+    .gauge{display:none}
+    section{padding-right:max(clamp(16px,7vw,120px), env(safe-area-inset-right,0px))}
+    .stats{grid-template-columns:1fr}
+  }
+  @media (max-width:520px){
+    .readout{gap:14px;font-size:10px}
+    .readout .hide-sm{display:none}
+    .top .hide-sm{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.2s!important}
+  }
+</style>
+</head>
+<body>
+<canvas id="sea" aria-hidden="true"></canvas>
+<div class="veil" aria-hidden="true"></div>
+
+<header class="top">
+  <span class="brand"><i></i>Abyssal</span>
+  <span><span class="hide-sm">A descent in five depths · </span><span id="clock">--:--</span></span>
+</header>
+
+<div class="gauge" aria-hidden="true">
+  <div class="rail"></div>
+  <div class="tick" style="top:0%">0 m</div>
+  <div class="tick" style="top:25%">200 m</div>
+  <div class="tick" style="top:50%">1,000 m</div>
+  <div class="tick" style="top:75%">4,000 m</div>
+  <div class="tick" style="top:100%">6,000 m</div>
+  <div class="mark" id="mark"></div>
+</div>
+
+<div class="readout" aria-live="off">
+  <div>Depth<b id="r-depth">0 m</b></div>
+  <div>Temp<b id="r-temp">18.0 °C</b></div>
+  <div class="hide-sm">Pressure<b id="r-pres">1 atm</b></div>
+  <div>Zone<b id="r-zone">Surface</b></div>
+</div>
+
+<main>
+  <section class="hero" data-depth="0">
+    <p class="zone">0 m · The surface</p>
+    <h1 class="title" aria-label="Abyssal"></h1>
+    <p class="lede">Below two hundred metres, sunlight gives up. <em>What remains is the light the ocean makes for itself.</em></p>
+    <a class="descend" href="#sunlit"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M7 1v11M2.5 7.5 7 12l4.5-4.5"/></svg>Begin the descent</a>
+  </section>
+
+  <section id="sunlit" data-depth="1">
+    <div class="split">
+      <div>
+        <p class="zone rv">0 – 200 m · Sunlight zone</p>
+        <h2 class="rv d1">A thin, bright skin on a <em>very deep</em> body.</h2>
+        <p class="body rv d2">Almost everything you picture when you think of the sea — reefs, kelp, sunlight dappling through water — lives in the top two hundred metres. It is where algae can still photosynthesise. Below it, the ocean keeps going.</p>
+      </div>
+      <div class="big-stat rv d2">
+        <div class="n">3,688<small>m</small></div>
+        <p class="l">The average depth of the ocean</p>
+        <div class="bar-wrap"><div class="bar" aria-hidden="true"></div><span>The lit part,<br>to scale</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="twilight" data-depth="2">
+    <p class="zone rv">200 – 1,000 m · Twilight zone</p>
+    <h2 class="rv d1">The largest migration on Earth happens <em>every night.</em></h2>
+    <p class="body rv d2">At dusk, billions of fish, squid and krill rise from the twilight zone to feed near the surface. Before dawn they sink back into the blue. Blue is the last colour left down here, and soon there is almost none.</p>
+    <div class="migr rv d3" aria-hidden="true">
+      <i style="--d:0"></i><i style="--d:.4"></i><i style="--d:.9"></i><i style="--d:1.3"></i><i style="--d:1.8"></i><i style="--d:2.2"></i><i style="--d:2.7"></i><i style="--d:3.1"></i><i style="--d:3.6"></i><i style="--d:4"></i><i style="--d:4.5"></i><i style="--d:4.9"></i>
+    </div>
+  </section>
+
+  <section class="midnight" data-depth="3">
+    <p class="zone rv">1,000 – 4,000 m · Midnight zone</p>
+    <h2 class="rv d1">Roughly three in four animals here <em>make their own light.</em></h2>
+    <p class="body rv d2" style="margin-inline:auto">To lure, to warn, to hide their silhouette, to find each other. With no sun to see by, the sea became its own night sky.</p>
+    <div class="stats rv d3">
+      <div class="stat"><div class="n">~4<small>°C</small></div><div class="l">Water temperature</div></div>
+      <div class="stat"><div class="n">400<small>atm</small></div><div class="l">Pressure at 4,000 m</div></div>
+      <div class="stat"><div class="n">76<small>%</small></div><div class="l">Deep-sea animals that glow</div></div>
+    </div>
+  </section>
+
+  <section class="abyss" data-depth="4">
+    <p class="zone rv">4,000 – 6,000 m · The abyss</p>
+    <h2 class="rv d1">Move through the dark.<br><em>It will answer.</em></h2>
+    <p class="body rv d2">Many plankton glow when the water around them is disturbed. Every point of light on this page reacts to you the same way.</p>
+    <div class="chips rv d3">
+      <span class="chip"><i></i>Move to stir the plankton</span>
+      <span class="chip"><i></i>Click to send a pulse</span>
+    </div>
+    <p class="foot">Drawn live on a 2D canvas · No images · One file</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  /* ── Title letters ── */
+  const title = $('.title');
+  [...'Abyssal'].forEach((ch, i) => { const s = document.createElement('span'); s.textContent = ch; s.style.setProperty('--i', i); s.setAttribute('aria-hidden', 'true'); title.appendChild(s); });
+
+  /* ── Clock ── */
+  const clock = $('#clock');
+  const tick = () => clock.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  tick(); setInterval(tick, 10000);
+
+  /* ── Reveal: only things below the first screen wait for the reader ── */
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.remove('later'); io.unobserve(e.target); } }), { threshold: .15 });
+  $$('.rv').forEach(el => { if (el.getBoundingClientRect().top > innerHeight * .95) { el.classList.add('later'); io.observe(el); } });
+
+  /* ── Depth model ── */
+  const secs = $$('section[data-depth]');
+  const DEPTH = [0, 200, 1000, 4000, 6000];
+  const TEMP = [18, 12, 5, 4, 1.8];
+  const ZONE = ['Surface', 'Sunlight', 'Twilight', 'Midnight', 'Abyss'];
+  let centers = [];
+  const measure = () => { centers = secs.map(s => s.offsetTop + s.offsetHeight / 2); };
+  measure(); addEventListener('resize', measure); addEventListener('load', measure);
+  const depthF = () => {
+    const y = scrollY + innerHeight / 2;
+    if (y <= centers[0]) return 0;
+    for (let i = 0; i < centers.length - 1; i++) if (y < centers[i + 1]) return i + (y - centers[i]) / (centers[i + 1] - centers[i]);
+    return centers.length - 1;
+  };
+  const interp = (arr, f) => { const i = Math.min(arr.length - 2, Math.floor(f)); return lerp(arr[i], arr[i + 1], f - i); };
+  const rDepth = $('#r-depth'), rTemp = $('#r-temp'), rPres = $('#r-pres'), rZone = $('#r-zone'), mark = $('#mark'), ticks = $$('.gauge .tick');
+  let lastReadout = '';
+
+  /* ── Canvas ── */
+  const cv = $('#sea');
+  const ctx = cv.getContext('2d', { alpha: false });
+  let W = 0, H = 0, DPR = 1, quality = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, quality > .8 ? 1.5 : 1);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  resize();
+  let rw = W;
+  addEventListener('resize', () => { if (Math.abs(innerWidth - rw) > 2 || Math.abs(innerHeight - H) > 120) { rw = innerWidth; resize(); } });
+
+  /* Glow sprites, drawn once */
+  function sprite(r, g, b, size = 64) {
+    const c = document.createElement('canvas'); c.width = c.height = size;
+    const x = c.getContext('2d'), h = size / 2;
+    const gr = x.createRadialGradient(h, h, 0, h, h, h);
+    gr.addColorStop(0, 'rgba(255,255,255,1)');
+    gr.addColorStop(.1, `rgba(${r},${g},${b},.95)`);
+    gr.addColorStop(.32, `rgba(${r},${g},${b},.28)`);
+    gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    x.fillStyle = gr; x.fillRect(0, 0, size, size);
+    return c;
+  }
+  const SPR = [sprite(95, 243, 255), sprite(70, 255, 200), sprite(110, 150, 255), sprite(170, 255, 240)];
+  const JCOL = [[255, 125, 210], [160, 130, 255], [95, 225, 255], [255, 185, 120]];
+  const JSPR = JCOL.map(c => sprite(c[0], c[1], c[2], 128));
+
+  /* Plankton */
+  let P = [];
+  const targetCount = () => Math.round(clamp(W * H / 1500, 260, 1000) * quality * (reduce ? .5 : 1));
+  function makeP(anywhere = true) {
+    const z = rand(.25, 1);
+    return { x: rand(0, W), y: anywhere ? rand(0, H) : H + 10, vx: 0, vy: 0, z, s: rand(6, 15) * z, k: Math.random() < .7 ? 0 : (Math.random() < .6 ? 1 : (Math.random() < .5 ? 2 : 3)), ex: 0, ph: rand(0, 6.28) };
+  }
+  function fillP() { const n = targetCount(); while (P.length < n) P.push(makeP()); if (P.length > n) P.length = n; }
+  fillP();
+
+  /* Marine snow */
+  const SNOW = Array.from({ length: 140 }, () => ({ x: rand(0, 1), y: rand(0, 1), z: rand(.3, 1), s: rand(.6, 1.8), w: rand(0, 6.28) }));
+
+  /* Jellyfish */
+  class Jelly {
+    constructor(first) { this.reset(first); }
+    reset(first) {
+      const small = W < 640 ? .65 : 1;
+      this.r = rand(24, 54) * small;
+      this.z = this.r / (54 * small);
+      this.x = rand(.08, .92) * W;
+      this.y = first ? rand(.25, 1.05) * H : H + this.r * 3 + rand(0, H * .3);
+      this.ang = -Math.PI / 2 + rand(-.35, .35);
+      this.drift = rand(-.25, .25);
+      this.v = 0; this.ph = rand(0, 6.28); this.freq = rand(.45, .75); this.seed = rand(0, 100);
+      this.ci = Math.floor(rand(0, JCOL.length)); this.flash = 0; this.prevC = 0;
+      const n = Math.round(rand(9, 13)), L = Math.round(rand(16, 24));
+      this.seg = this.r * rand(.2, .28);
+      this.tent = Array.from({ length: n }, () => Array.from({ length: L }, (_, i) => ({ x: this.x, y: this.y + i * this.seg })));
+      this.arms = Array.from({ length: 4 }, () => Array.from({ length: Math.round(L * .55) }, (_, i) => ({ x: this.x, y: this.y + i * this.seg })));
+    }
+    update(dt, t) {
+      this.ph += dt * this.freq * Math.PI * 2;
+      const c = Math.pow(.5 + .5 * Math.sin(this.ph), 3);
+      const dc = c - this.prevC; this.prevC = c; this.c = c;
+      if (dc > 0) this.v += dc * this.r * .055;
+      this.v *= Math.pow(.6, dt);
+      /* steer: upward, gentle wander, shy of the cursor */
+      let target = -Math.PI / 2 + this.drift + Math.sin(t * .17 + this.seed) * .35;
+      const dx = this.x - mouse.x, dy = this.y - mouse.y, d = Math.hypot(dx, dy);
+      if (mouse.active && d < 220) target = Math.atan2(dy, dx) * .6 + target * .4;
+      let da = target - this.ang; da = Math.atan2(Math.sin(da), Math.cos(da));
+      this.ang += da * dt * .6;
+      const sp = (this.v + .12) * 60 * dt;
+      this.x += Math.cos(this.ang) * sp; this.y += Math.sin(this.ang) * sp;
+      this.flash *= Math.pow(.25, dt);
+      if (this.y < -this.r * 8 || this.x < -this.r * 6 || this.x > W + this.r * 6) this.reset(false);
+      /* tentacles: follow-the-leader chains */
+      const rot = this.ang + Math.PI / 2, cr = Math.cos(rot), sr = Math.sin(rot);
+      const bx = -Math.cos(this.ang), by = -Math.sin(this.ang), px = -by, py = bx;
+      const w = this.r * (1 - .22 * c);
+      const chain = (pts, lx, ly, seg, k, wav) => {
+        pts[0].x = this.x + lx * cr - ly * sr; pts[0].y = this.y + lx * sr + ly * cr;
+        for (let i = 1; i < pts.length; i++) {
+          const p = pts[i], q = pts[i - 1];
+          const sway = Math.sin(t * 1.6 + i * .45 + k * 1.7 + this.seed) * wav * (i / pts.length);
+          p.x += bx * .9 + px * sway; p.y += by * .9 + py * sway + .15;
+          const ddx = p.x - q.x, ddy = p.y - q.y, dd = Math.hypot(ddx, ddy) || 1;
+          p.x = q.x + ddx / dd * seg; p.y = q.y + ddy / dd * seg;
+        }
+      };
+      const n = this.tent.length;
+      this.tent.forEach((pts, k) => chain(pts, (k / (n - 1) - .5) * 2 * w * .92, this.r * .05, this.seg, k, 1.1));
+      this.arms.forEach((pts, k) => chain(pts, (k / 3 - .5) * w * .5, -this.r * .1, this.seg * .9, k + 20, 2.4));
+    }
+    draw(alpha) {
+      const [r, g, b] = JCOL[this.ci], c = this.c || 0;
+      const a = alpha * (1 + this.flash * 1.5);
+      ctx.globalCompositeOperation = 'lighter';
+      /* halo */
+      ctx.globalAlpha = clamp(.22 * a, 0, 1);
+      const hs = this.r * 6.5;
+      ctx.drawImage(JSPR[this.ci], this.x - hs / 2, this.y - hs / 2, hs, hs);
+      /* tentacles */
+      ctx.lineCap = 'round';
+      const stroke = (pts, wdt, al) => {
+        ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length - 1; i++) { const mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2; ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my); }
+        ctx.lineWidth = wdt; ctx.strokeStyle = `rgba(${r},${g},${b},${clamp(al * a, 0, 1)})`; ctx.stroke();
+      };
+      ctx.globalAlpha = 1;
+      this.arms.forEach(pts => { stroke(pts, this.r * .16, .10); stroke(pts, this.r * .05, .22); });
+      this.tent.forEach(pts => stroke(pts, .9, .34));
+      /* bell */
+      const w = this.r * (1 - .22 * c), h = this.r * (.82 + .22 * c);
+      ctx.save();
+      ctx.translate(this.x, this.y); ctx.rotate(this.ang + Math.PI / 2);
+      ctx.beginPath();
+      ctx.moveTo(-w, 0);
+      ctx.bezierCurveTo(-w * 1.04, -h * 1.38, w * 1.04, -h * 1.38, w, 0);
+      const sc = 9;
+      for (let j = 0; j < sc; j++) { const x0 = w - j / sc * 2 * w, x1 = w - (j + 1) / sc * 2 * w; ctx.quadraticCurveTo((x0 + x1) / 2, h * (.1 + .08 * c), x1, 0); }
+      ctx.closePath();
+      const gr = ctx.createRadialGradient(0, -h * .55, 0, 0, -h * .4, this.r * 1.2);
+      gr.addColorStop(0, `rgba(255,255,255,${clamp(.42 * a, 0, 1)})`);
+      gr.addColorStop(.35, `rgba(${r},${g},${b},${clamp(.32 * a, 0, 1)})`);
+      gr.addColorStop(1, `rgba(${r},${g},${b},${clamp(.06 * a, 0, 1)})`);
+      ctx.fillStyle = gr; ctx.fill();
+      ctx.lineWidth = 1.1; ctx.strokeStyle = `rgba(${r},${g},${b},${clamp(.7 * a, 0, 1)})`; ctx.stroke();
+      /* inner structure */
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(255,255,255,${clamp(.22 * a, 0, 1)})`;
+      for (let k = 0; k < 4; k++) {
+        ctx.beginPath();
+        ctx.ellipse((k - 1.5) * w * .28, -h * .38, w * .13, h * .2, (k - 1.5) * .35, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.beginPath(); ctx.moveTo(-w * .96, -h * .05); ctx.bezierCurveTo(-w * .7, -h * .9, w * .7, -h * .9, w * .96, -h * .05);
+      ctx.strokeStyle = `rgba(${r},${g},${b},${clamp(.25 * a, 0, 1)})`; ctx.stroke();
+      ctx.restore();
+    }
+  }
+  const J = Array.from({ length: W < 640 ? 3 : 5 }, () => new Jelly(true));
+
+  /* Input */
+  const mouse = { x: -9999, y: -9999, active: false, vx: 0, vy: 0 };
+  addEventListener('pointermove', e => { mouse.vx = e.clientX - mouse.x; mouse.vy = e.clientY - mouse.y; mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; }, { passive: true });
+  addEventListener('pointerleave', () => { mouse.active = false; });
+  document.addEventListener('mouseleave', () => { mouse.active = false; });
+  const waves = [];
+  addEventListener('pointerdown', e => {
+    if (e.target.closest('a')) return;
+    waves.push({ x: e.clientX, y: e.clientY, r: 0, life: 1 });
+    if (waves.length > 6) waves.shift();
+  });
+  $('.descend').addEventListener('click', e => { e.preventDefault(); $('#sunlit').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' }); });
+
+  /* Flow field */
+  const flow = (x, y, t) => Math.sin(x * .0031 + t * .11) * Math.cos(y * .0042 - t * .07) * 3.2 + Math.sin((x + y) * .0016 + t * .05) * 1.4;
+
+  /* ── Frame ── */
+  let last = performance.now(), lastScroll = scrollY, depthS = depthF(), slow = 0, fast = 0, T = 0;
+  function frame(now) {
+    const dtRaw = Math.min(.05, (now - last) / 1000); last = now;
+    const dt = dtRaw * (reduce ? .35 : 1); T += dt; const t = T;
+
+    /* adaptive quality */
+    if (dtRaw > .026) slow++; else slow = Math.max(0, slow - 1);
+    if (slow > 40 && quality > .45) { quality *= .78; slow = 0; resize(); fillP(); }
+
+    const f = depthF();
+    depthS += (f - depthS) * (1 - Math.pow(.02, dtRaw));
+    const dk = depthS / 4;                        /* 0 surface → 1 abyss */
+    const dScroll = scrollY - lastScroll; lastScroll = scrollY;
+
+    /* readout */
+    const dm = interp(DEPTH, depthS), tc = interp(TEMP, depthS);
+    const zi = Math.min(4, Math.round(depthS));
+    const txt = Math.round(dm).toLocaleString('en-US') + '|' + tc.toFixed(1) + '|' + zi;
+    if (txt !== lastReadout) {
+      lastReadout = txt;
+      rDepth.textContent = Math.round(dm).toLocaleString('en-US') + ' m';
+      rTemp.textContent = tc.toFixed(1) + ' °C';
+      rPres.textContent = Math.round(1 + dm / 10).toLocaleString('en-US') + ' atm';
+      rZone.textContent = ZONE[zi];
+      ticks.forEach((el, i) => el.classList.toggle('on', i === zi));
+    }
+    mark.style.top = (depthS / 4 * 100) + '%';
+
+    /* background water column */
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    const s = clamp(1 - dk * 1.7, 0, 1), s2 = s * s;
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, `rgb(${lerp(2, 22, s2) | 0},${lerp(6, 92, s2) | 0},${lerp(12, 128, s2) | 0})`);
+    bg.addColorStop(.45, `rgb(${lerp(1, 8, s) | 0},${lerp(5, 40, s) | 0},${lerp(10, 66, s) | 0})`);
+    bg.addColorStop(1, `rgb(${lerp(0, 3, s) | 0},${lerp(2, 16, s) | 0},${lerp(5, 30, s) | 0})`);
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    ctx.globalCompositeOperation = 'lighter';
+
+    /* light shafts from the surface */
+    if (s > .01) {
+      for (let i = 0; i < 7; i++) {
+        const cx = W * (i / 6) + Math.sin(t * .13 + i * 1.9) * W * .06;
+        const top = 40 + 30 * Math.sin(t * .2 + i);
+        const spread = W * (.08 + .05 * Math.sin(t * .11 + i * 2.3));
+        const len = H * (1.05 - .1 * i % 3);
+        const g = ctx.createLinearGradient(0, 0, 0, len);
+        const al = (.055 + .04 * Math.sin(t * .37 + i * 1.3)) * s2;
+        g.addColorStop(0, `rgba(170,230,255,${al})`);
+        g.addColorStop(1, 'rgba(170,230,255,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(cx - top, -10); ctx.lineTo(cx + top, -10);
+        ctx.lineTo(cx + spread + W * .12, len); ctx.lineTo(cx - spread + W * .06, len); ctx.closePath(); ctx.fill();
+      }
+      /* caustic glimmer at the surface */
+      const cg = ctx.createLinearGradient(0, 0, 0, H * .25);
+      cg.addColorStop(0, `rgba(140,220,255,${.12 * s2})`); cg.addColorStop(1, 'rgba(140,220,255,0)');
+      ctx.fillStyle = cg; ctx.fillRect(0, 0, W, H * .25);
+    }
+
+    /* marine snow */
+    ctx.fillStyle = 'rgba(200,230,240,1)';
+    for (const p of SNOW) {
+      p.y += (.008 * p.z * dt) - dScroll / H * p.z * .5;
+      p.x += Math.sin(t * .4 + p.w) * .0002;
+      if (p.y > 1.02) p.y -= 1.04; if (p.y < -.02) p.y += 1.04;
+      ctx.globalAlpha = (.12 + .2 * p.z) * (.55 + .45 * (1 - dk));
+      ctx.fillRect(p.x * W, p.y * H, p.s, p.s);
+    }
+
+    /* waves (click pulses) */
+    for (let i = waves.length - 1; i >= 0; i--) {
+      const w = waves[i];
+      w.r += dt * 520; w.life -= dt * .55;
+      if (w.life <= 0) { waves.splice(i, 1); continue; }
+      ctx.globalAlpha = w.life * .5;
+      ctx.strokeStyle = 'rgba(120,245,255,1)'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2); ctx.stroke();
+      for (const j of J) { const d = Math.hypot(j.x - w.x, j.y - w.y); if (Math.abs(d - w.r) < 30) j.flash = 1; }
+    }
+
+    /* plankton */
+    const base = .26 + .55 * dk;
+    const R = 150, R2 = R * R;
+    const mspeed = Math.min(1.5, Math.hypot(mouse.vx, mouse.vy) / 18);
+    mouse.vx *= .85; mouse.vy *= .85;
+    for (const p of P) {
+      const a = flow(p.x, p.y, t);
+      p.vx += Math.cos(a) * .028 * p.z; p.vy += Math.sin(a) * .028 * p.z - .004;
+      if (mouse.active) {
+        const dx = p.x - mouse.x, dy = p.y - mouse.y, d2 = dx * dx + dy * dy;
+        if (d2 < R2) {
+          const d = Math.sqrt(d2) || 1, k = 1 - d / R;
+          p.ex = Math.max(p.ex, k * (.35 + mspeed));
+          p.vx += dx / d * k * (.12 + mspeed * .5) + mouse.vx * k * .02; p.vy += dy / d * k * (.12 + mspeed * .5) + mouse.vy * k * .02;
+        }
+      }
+      for (const w of waves) {
+        const dx = p.x - w.x, dy = p.y - w.y, d = Math.hypot(dx, dy);
+        if (Math.abs(d - w.r) < 24) { p.ex = 1.4; p.vx += dx / (d || 1) * 1.6 * w.life; p.vy += dy / (d || 1) * 1.6 * w.life; }
+      }
+      p.vx *= .955; p.vy *= .955;
+      p.x += p.vx * dt * 60; p.y += p.vy * dt * 60 - dScroll * p.z * .7;
+      p.ex *= Math.pow(.32, dt);
+      if (p.x < -20) p.x += W + 40; else if (p.x > W + 20) p.x -= W + 40;
+      if (p.y < -20) p.y += H + 40; else if (p.y > H + 20) p.y -= H + 40;
+      const tw = .55 + .45 * Math.sin(t * (.6 + p.z) + p.ph);
+      const al = clamp(base * tw * (.35 + .65 * p.z) + p.ex * .9, 0, 1);
+      if (al < .02) continue;
+      const sz = p.s * (1 + p.ex * 1.3);
+      ctx.globalAlpha = al;
+      ctx.drawImage(SPR[p.k], p.x - sz / 2, p.y - sz / 2, sz, sz);
+    }
+
+    /* jellyfish */
+    const ja = .55 + .45 * dk;
+    for (const j of J) { j.y -= dScroll * j.z * .35; j.update(dt, t); j.draw(ja * (.6 + .4 * j.z)); }
+
+    /* cursor lantern */
+    if (mouse.active) {
+      ctx.globalAlpha = .18 + mspeed * .1;
+      const cs = 260;
+      ctx.drawImage(SPR[0], mouse.x - cs / 2, mouse.y - cs / 2, cs, cs);
+    }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
