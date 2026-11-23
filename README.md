@@ -1,5 +1,34 @@
 # bestpagever
 
-frontier models building a single html page with this prompt:
+A side-by-side look at what frontier models build from one open-ended prompt: a single, self-contained HTML file.
 
-create the most beautiful and stunning single HTML file you can possibly imagine that works in a chrome or edge browser
+## The prompt
+
+> Create the most beautiful and stunning single HTML file you can possibly imagine that works in a Chrome or Edge browser.
+
+Each model gets the same prompt and returns one `.html` file. No frameworks, no build step, no external assets required.
+
+## Pages
+
+| Page | Folder | Description |
+| --- | --- | --- |
+| Aether — a living sky | [`neon/`](neon/aether.html) | An animated, glassy sky with a violet, cyan and rose palette. |
+| Abyssal | [`opus/`](opus/Abyssal.html) | A single-file page built from the same prompt. |
+
+## Viewing
+
+No install needed. Open any file directly in Chrome or Edge:
+
+```sh
+open neon/aether.html
+open opus/Abyssal.html
+```
+
+Or double-click the file in Finder or Explorer.
+
+## Adding a page
+
+1. Generate a single HTML file from the prompt above.
+2. Put it in a folder named for the model that produced it (for example `opus/`).
+3. Keep the file self-contained so it opens without a server.
+4. Add a row to the table above.
