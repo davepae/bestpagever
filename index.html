@@ -346,7 +346,8 @@
   </section>
 </main>
 
-<script id="frag" type="x-shader/x-fragment">
+<script>
+const FRAG_SRC = `
 precision highp float;
 uniform vec2  uRes;
 uniform float uTime;
@@ -513,9 +514,7 @@ void main(){
   col += (hash(frag + fract(t)*100.) - .5) / 255. * 2.;
   gl_FragColor = vec4(col, 1.);
 }
-</script>
-
-<script>
+`;
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
   const $$ = (s, el=document) => [...el.querySelectorAll(s)];
@@ -627,7 +626,7 @@ void main(){
     const vs = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
     const mk = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
       if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; } return s; };
-    const v = mk(gl.VERTEX_SHADER, vs), f = mk(gl.FRAGMENT_SHADER, $('#frag').textContent);
+    const v = mk(gl.VERTEX_SHADER, vs), f = mk(gl.FRAGMENT_SHADER, FRAG_SRC);
     const prog = gl.createProgram();
     if (v && f) {
       gl.attachShader(prog, v); gl.attachShader(prog, f); gl.linkProgram(prog);
@@ -679,6 +678,9 @@ void main(){
       }
     }
   }
+
+  if (draw.length === 0 && gl) { const c2 = canvas.cloneNode(); canvas.replaceWith(c2); }
+  else if (!gl) { /* CSS gradient on #sky already shows */ }
 
   /* ── Main loop ── */
   const loop = now => {
