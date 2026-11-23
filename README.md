@@ -12,7 +12,7 @@ Each model gets the same prompt and returns one `.html` file. No frameworks, no 
 
 | Page | Folder | Description |
 | --- | --- | --- |
-| Aether — a living sky | [`neon/`](neon/aether.html) | An animated, glassy sky with a violet, cyan and rose palette. |
+| Aetherium — interactive light & gravity observatory | [`neon/`](neon/aetherium.html) | An interactive observatory of light and gravity with glassy, amber-accented panels. |
 | Abyssal | [`opus/`](opus/Abyssal.html) | A single-file page built from the same prompt. |
 
 ## Viewing
@@ -20,7 +20,7 @@ Each model gets the same prompt and returns one `.html` file. No frameworks, no 
 No install needed. Open any file directly in Chrome or Edge:
 
 ```sh
-open neon/aether.html
+open neon/aetherium.html
 open opus/Abyssal.html
 ```
 
